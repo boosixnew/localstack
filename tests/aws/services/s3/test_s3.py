@@ -72,6 +72,7 @@ from localstack.utils.strings import (
 from localstack.utils.sync import retry
 from localstack.utils.testutil import check_expected_lambda_log_events_length
 from localstack.utils.urls import localstack_host as get_localstack_host
+from tests.aws.services.s3.conftest import TEST_S3_IMAGE
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
@@ -299,6 +300,7 @@ def _filter_header(param: dict) -> dict:
 
 
 class TestS3:
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="KMS not enabled in S3 image")
     @markers.aws.validated
     @markers.snapshot.skip_snapshot_verify(
         condition=is_v2_provider,
@@ -1364,6 +1366,7 @@ class TestS3:
         )
         snapshot.match("object-attrs-after-copy", object_attrs)
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="KMS not enabled in S3 image")
     @markers.aws.validated
     @markers.snapshot.skip_snapshot_verify(
         paths=[
@@ -3081,6 +3084,7 @@ class TestS3:
             aws_client.s3.get_object(Bucket=bucket_name, Key="camelcasekey")
         snapshot.match("wrong-case-key", e.value.response)
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="Lambda not enabled in S3 image")
     @markers.aws.validated
     def test_s3_download_object_with_lambda(
         self, s3_create_bucket, create_lambda_function, lambda_su_role, aws_client
@@ -3380,6 +3384,7 @@ class TestS3:
         assert resp.ok
         assert b"<Bucket" in resp.content
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="Lambda not enabled in S3 image")
     @markers.skip_offline
     @markers.aws.validated
     @markers.snapshot.skip_snapshot_verify(
@@ -4051,6 +4056,7 @@ class TestS3:
         assert len(proxied_response.headers["server"].split(",")) == 1
         assert len(proxied_response.headers["date"].split(",")) == 2  # coma in the date
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="KMS not enabled in S3 image")
     @markers.aws.validated
     def test_s3_sse_validate_kms_key(
         self,
@@ -4187,6 +4193,7 @@ class TestS3:
             )
         snapshot.match("copy-obj-wrong-kms-key", e.value.response)
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="KMS not enabled in S3 image")
     @markers.aws.validated
     @markers.snapshot.skip_snapshot_verify(
         paths=[
@@ -4833,6 +4840,7 @@ class TestS3:
         response = aws_client.s3.get_object(Bucket=s3_bucket, Key=key_name)
         snapshot.match("get-obj", response)
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="KMS not enabled in S3 image")
     @markers.aws.validated
     # there is currently no server side encryption is place in LS, ETag will be different
     @markers.snapshot.skip_snapshot_verify(paths=["$..ETag"])
@@ -4896,6 +4904,7 @@ class TestS3:
         response = aws_client.s3.get_object(Bucket=s3_bucket, Key=key_after_set)
         snapshot.match("get-obj-after-setting", response)
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="KMS not enabled in S3 image")
     @markers.aws.validated
     @pytest.mark.skip(
         reason="Behaviour not implemented yet: https://github.com/localstack/localstack/issues/6882"
@@ -6216,6 +6225,7 @@ class TestS3PresignedUrl:
         # test we only get the first 18 bytes from the object
         assert "something something" == to_str(response.content)
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="STS not enabled in S3 image")
     @markers.aws.validated
     def test_presigned_url_with_session_token(
         self, s3_create_bucket_with_client, patch_s3_skip_signature_validation_false, aws_client
@@ -6567,6 +6577,7 @@ class TestS3PresignedUrl:
         assert response.status_code == 200
         assert response.content == data
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="Lambda not enabled in S3 image")
     @markers.aws.validated
     @markers.snapshot.skip_snapshot_verify(
         condition=is_v2_provider,
@@ -6643,6 +6654,7 @@ class TestS3PresignedUrl:
         head_object = aws_client.s3.head_object(Bucket=function_name, Key=object_key)
         snapshot.match("head-object", head_object)
 
+    @pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="Lambda not enabled in S3 image")
     @markers.aws.validated
     def test_presigned_url_v4_signed_headers_in_qs(
         self,
@@ -9231,6 +9243,8 @@ class TestS3BucketLogging:
         assert e.value.response["Error"]["TargetBucket"] == nonexistent_target_bucket
 
 
+# TODO: maybe we can fake the IAM role as it's not needed in LocalStack
+@pytest.mark.skipif(condition=TEST_S3_IMAGE, reason="IAM not enabled in S3 image")
 class TestS3BucketReplication:
     @markers.aws.validated
     def test_replication_config_without_filter(
