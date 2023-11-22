@@ -70,6 +70,9 @@ def load_service(service: ServiceName, version: str = None, model_type="service-
     For example: load_service("sqs", "2012-11-05")
     """
     service_description = loader.load_service_model(service, model_type, version)
+    # TODO manage this mapping properly
+    if service == "sqs-query":
+        service = "sqs"
     return ServiceModel(service_description, service)
 
 

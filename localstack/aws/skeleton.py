@@ -124,8 +124,6 @@ class Skeleton:
 
     def __init__(self, service: ServiceModel, implementation: Union[Any, DispatchTable]):
         self.service = service
-        self.parser = create_parser(service)
-        self.serializer = create_serializer(service)
 
         if isinstance(implementation, dict):
             self.dispatch_table = implementation
@@ -138,7 +136,7 @@ class Skeleton:
             operation, instance = context.operation, context.service_request
         else:
             # otherwise, parse the incoming HTTPRequest
-            operation, instance = self.parser.parse(context.request)
+            operation, instance = create_parser(context.service).parse(context.request)
             context.operation = operation
 
         try:
@@ -172,7 +170,7 @@ class Skeleton:
         context.service_response = result
 
         # Serialize result dict to an HTTPResponse and return it
-        return self.serializer.serialize_to_response(
+        return create_serializer(context.service).serialize_to_response(
             result, operation, context.request.headers, context.request_id
         )
 

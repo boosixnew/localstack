@@ -64,13 +64,7 @@ class ServiceRequestParser(Handler):
         return self.parse_and_enrich(context)
 
     def get_parser(self, service: ServiceModel):
-        name = service.service_name
-
-        if name in self.parsers:
-            return self.parsers[name]
-
-        self.parsers[name] = create_parser(service)
-        return self.parsers[name]
+        return create_parser(service)
 
     def parse_and_enrich(self, context: RequestContext):
         parser = self.get_parser(context.service)
